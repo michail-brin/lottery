@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розыгрыш призов</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --accent-color: #3498db;
+            --accent-hover: #2980b9;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --border-color: #dcdde1;
+            --muted-color: #7f8c8d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Навигация / Переключатель режимов */
+        .admin-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--muted-color);
+            padding: 8px 14px;
+            font-size: 13px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .admin-toggle:hover {
+            background: #eef1f3;
+            color: var(--text-color);
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 500px;
+            transition: all 0.3s ease;
+        }
+
+        /* Управление видимостью экранов */
+        .page {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 26px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--muted-color);
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        textarea, input[type="number"], input[type="password"] {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus, input[type="number"]:focus, input[type="password"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn-main {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%;
+        }
+
+        .btn-main:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Экран вывода приза */
+        .prize-display {
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .prize-crown {
+            font-size: 50px;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite alternate;
+        }
+
+        .prize-title {
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted-color);
+            margin-bottom: 5px;
+        }
+
+        .prize-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--success-color);
+            margin-bottom: 25px;
+            line-height: 1.3;
+        }
+
+        /* Ошибки и уведомления */
+        .error-message {
+            color: var(--error-color);
+            background: #fdedec;
+            border: 1px solid #fadbd8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        /* Список призов в админке */
+        .prize-preview {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .prize-item {
+            padding: 6px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .prize-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Кнопка перехода в админку / выхода -->
+<button class="admin-toggle" id="navToggle" onclick="handleNavClick()">⚙️ Настройка призов</button>
+
+<div class="container">
+
+    <!-- ЭКРАН 1: ПРИВЕТСТВИЕ И ВВОД НОМЕРА -->
+    <div id="pageWelcome" class="page active">
+        <h1>🎁 Розыгрыш призов!</h1>
+        <p class="subtitle">Введите номер приза</p>
+        
+        <div class="input-group">
+            <input type="number" id="numberInput" min="1" placeholder="Например: 3" autofocus>
+            <button class="btn-main" onclick="claimPrize()">Открыть приз</button>
+        </div>
+    </div>
+
+
+    <!-- ЭКРАН 2: ДЕМОНСТРАЦИЯ ВЫИГРЫША -->
+    <div id="pageResult" class="page">
+        <div class="prize-display">
+            <div class="prize-crown">🎉</div>
+            <div class="prize-title">Ваш выигрыш:</div>
+            <div id="wonPrizeName" class="prize-name">Супер-приз</div>
+            <button class="btn-main" style="background-color: #95a5a6;" onclick="goToWelcome()">Назад к вводу</button>
+        </div>
+    </div>
+
+
+    <!-- ЭКРАН 3: ОШИБКА (Неверный номер) -->
+    <div id="pageError" class="page">
+        <h1>Упс! Что-то не так</h1>
+        <p class="subtitle">Проверьте правильность номера</p>
+        <div id="errorText" class="error-message">Приза под такому номеру не существует.</div>
+        <button class="btn-main" onclick="goToWelcome()">Попробовать снова</button>
+    </div>
+
+
+    <!-- ЭКРАН 4: ВВОД ПАРОЛЯ ДЛЯ АДМИНКИ -->
+    <div id="pagePassword" class="page">
+        <h1>🔒 Доступ ограничен</h1>
+        <p class="subtitle">Введите пароль для управления списком</p>
+        
+        <div id="passwordError" class="error-message" style="display: none;">Неверный пароль. Попробуйте еще раз.</div>
+        
+        <div class="input-group">
+            <input type="password" id="passwordInput" placeholder="Введите пароль">
+            <button class="btn-main" onclick="verifyPassword()">Войти</button>
+            <button class="btn-main" style="background-color: #95a5a6;" onclick="goToWelcome()">Отмена</button>
+        </div>
+    </div>
+
+
+    <!-- ЭКРАН 5: ПАНЕЛЬ УПРАВЛЕНИЯ СПИСКОМ -->
+    <div id="pageAdmin" class="page">
+        <h1 style="font-size: 20px; text-align: left; margin-bottom: 5px;">⚙️ Панель управления</h1>
+        <p class="subtitle" style="text-align: left; margin-bottom: 20px;">Настройте список доступных наград</p>
+        
+        <label for="prizesInput">Список призов (через запятую):</label>
+        <textarea id="prizesInput" oninput="saveAndRefreshPrizes()" placeholder="Смартфон, Ноутбук, Настольная игра"></textarea>
+        
+        <label style="color: var(--muted-color); font-size: 13px;">Текущая нумерация:</label>
+        <div class="prize-preview" id="prizePreview"></div>
+        
+        <button class="btn-main" style="margin-top: 20px; background-color: #27ae60;" onclick="closeAdmin()">Сохранить и выйти</button>
+    </div>
+
+</div>
+
+<script>
+    // Элементы интерфейса
+    const pageWelcome = document.getElementById('pageWelcome');
+    const pageResult = document.getElementById('pageResult');
+    const pageError = document.getElementById('pageError');
+    const pagePassword = document.getElementById('pagePassword');
+    const pageAdmin = document.getElementById('pageAdmin');
+    
+    const numberInput = document.getElementById('numberInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const passwordError = document.getElementById('passwordError');
+    const prizesInput = document.getElementById('prizesInput');
+    const prizePreview = document.getElementById('prizePreview');
+    const wonPrizeName = document.getElementById('wonPrizeName');
+    const errorText = document.getElementById('errorText');
+    const navToggle = document.getElementById('navToggle');
+
+    let currentPrizes = [];
+    let currentMode = 'user'; // Возможные варианты: 'user', 'password', 'admin'
+
+    // 1. Инициализация призов из памяти браузера (localStorage) или дефолтный список
+    function initPrizes() {
+        const savedPrizes = localStorage.getItem('lottery_prizes_list');
+        if (savedPrizes !== null) {
+            prizesInput.value = savedPrizes;
+        } else {
+            prizesInput.value = "Телевизор, Самокат, Настольная игра, Секретный бокс, Утешительный приз";
+        }
+        parsePrizes();
+    }
+
+    // Разбор текста из textarea в массив
+    function parsePrizes() {
+        currentPrizes = prizesInput.value.split(',')
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+        
+        prizePreview.innerHTML = '';
+        if (currentPrizes.length === 0) {
+            prizePreview.innerHTML = '<div style="color: #95a5a6; font-style: italic;">Список пуст. Введите призы через запятую.</div>';
+            return;
+        }
+        currentPrizes.forEach((prize, index) => {
+            const div = document.createElement('div');
+            div.className = 'prize-item';
+            div.innerHTML = `<strong>№ ${index + 1}:</strong> ${prize}`;
+            prizePreview.appendChild(div);
+        });
+    }
+
+    // Сохранение изменений в процессе ввода в админке
+    function saveAndRefreshPrizes() {
+        localStorage.setItem('lottery_prizes_list', prizesInput.value);
+        parsePrizes();
+    }
+
+    // 2. Логика управления экранами
+    function switchPage(activePage) {
+        [pageWelcome, pageResult, pageError, pagePassword, pageAdmin].forEach(page => {
+            page.classList.remove('active');
+        });
+        activePage.classList.add('active');
+    }
+
+    function goToWelcome() {
+        currentMode = 'user';
+        navToggle.textContent = "⚙️ Настройка призов";
+        numberInput.value = '';
+        passwordInput.value = '';
+        passwordError.style.display = 'none';
+        switchPage(pageWelcome);
+        setTimeout(() => numberInput.focus(), 100);
+    }
+
+    // Обработка клика по верхней кнопке навигации
+    function handleNavClick() {
+        if (currentMode === 'user') {
+            // Переход на промежуточный экран ввода пароля
+            currentMode = 'password';
+            navToggle.textContent = "⬅️ К розыгрышу";
+            passwordInput.value = '';
+            passwordError.style.display = 'none';
+            switchPage(pagePassword);
+            setTimeout(() => passwordInput.focus(), 100);
+        } else {
+            // Если мы в админке или на экране пароля — возвращаемся обратно
+            goToWelcome();
+        }
+    }
+
+    // Проверка пароля (1997)
+    function verifyPassword() {
+        if (passwordInput.value === '1997') {
+            currentMode = 'admin';
+            passwordError.style.display = 'none';
+            switchPage(pageAdmin);
+        } else {
+            passwordError.style.display = 'block';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+
+    function closeAdmin() {
+        goToWelcome();
+    }
+
+    // 3. Логика проверки введенного числа участником
+    function claimPrize() {
+        const enteredNumber = parseInt(numberInput.value, 10);
+
+        if (isNaN(enteredNumber)) {
+            errorText.textContent = "Пожалуйста, введите числовой номер приза.";
+            switchPage(pageError);
+            return;
+        }
+
+        if (currentPrizes.length === 0) {
+            errorText.innerHTML = "В системе еще нет настроенных призов.<br>Перейдите в настройки в верхнем углу и добавьте их.";
+            switchPage(pageError);
+            return;
+        }
+
+        if (enteredNumber >= 1 && enteredNumber <= currentPrizes.length) {
+            const prize = currentPrizes[enteredNumber - 1];
+            wonPrizeName.textContent = prize;
+            switchPage(pageResult);
+        } else {
+            errorText.innerHTML = `Приза под номером <strong>${enteredNumber}</strong> не существует.<br>Доступны номера только от 1 до ${currentPrizes.length}.`;
+            switchPage(pageError);
+        }
+    }
+
+    // Перехват нажатия Enter в полях ввода для удобства
+    numberInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') claimPrize();
+    });
+
+    passwordInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') verifyPassword();
+    });
+
+    // Запуск при открытии страницы
+    initPrizes();
+</script>
+
+</body>
+</html>
