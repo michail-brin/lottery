@@ -88,6 +88,18 @@
             font-size: 15px;
         }
 
+        /* Стили для блока правил (Новый элемент) */
+        .rules-box {
+            background-color: #ebf5fb;
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 25px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #34495e;
+        }
+
         label {
             display: block;
             font-weight: 600;
@@ -217,13 +229,18 @@
 
 <div class="container">
 
-    <!-- ЭКРАН 1: ПРИВЕТСТВИЕ И ВВОД НОМЕРА -->
+    <!-- ЭКРАН 1: ПРИВЕТСТВИЕ И ВВОД БАЛЛОВ -->
     <div id="pageWelcome" class="page active">
+        <!-- Блок правил НАД плашкой названия -->
+        <div class="rules-box">
+            💡 Участвуй в мастер-классах, получай за них баллы и копи. По итогу прохождения всех активностей, введи сумму баллов и узнай, какой приз ты выиграл.
+        </div>
+
         <h1>🎁 Розыгрыш призов!</h1>
-        <p class="subtitle">Введите номер приза</p>
+        <p class="subtitle">введите ваши баллы</p>
         
         <div class="input-group">
-            <input type="number" id="numberInput" min="1" placeholder="Например: 3" autofocus>
+            <input type="number" id="numberInput" min="1" placeholder="Например: 5" autofocus>
             <button class="btn-main" onclick="claimPrize()">Открыть приз</button>
         </div>
     </div>
@@ -240,11 +257,11 @@
     </div>
 
 
-    <!-- ЭКРАН 3: ОШИБКА (Неверный номер) -->
+    <!-- ЭКРАН 3: ОШИБКА -->
     <div id="pageError" class="page">
         <h1>Упс! Что-то не так</h1>
-        <p class="subtitle">Проверьте правильность номера</p>
-        <div id="errorText" class="error-message">Приза под такому номеру не существует.</div>
+        <p class="subtitle">Проверьте правильность введенных баллов</p>
+        <div id="errorText" class="error-message">Приза за такое количество баллов не существует.</div>
         <button class="btn-main" onclick="goToWelcome()">Попробовать снова</button>
     </div>
 
@@ -267,12 +284,12 @@
     <!-- ЭКРАН 5: ПАНЕЛЬ УПРАВЛЕНИЯ СПИСКОМ -->
     <div id="pageAdmin" class="page">
         <h1 style="font-size: 20px; text-align: left; margin-bottom: 5px;">⚙️ Панель управления</h1>
-        <p class="subtitle" style="text-align: left; margin-bottom: 20px;">Настройте список доступных наград</p>
+        <p class="subtitle" style="text-align: left; margin-bottom: 20px;">Настройте соответствие призов и баллов</p>
         
         <label for="prizesInput">Список призов (через запятую):</label>
         <textarea id="prizesInput" oninput="saveAndRefreshPrizes()" placeholder="Смартфон, Ноутбук, Настольная игра"></textarea>
         
-        <label style="color: var(--muted-color); font-size: 13px;">Текущая нумерация:</label>
+        <label style="color: var(--muted-color); font-size: 13px;">Номер приза равен количеству баллов:</label>
         <div class="prize-preview" id="prizePreview"></div>
         
         <button class="btn-main" style="margin-top: 20px; background-color: #27ae60;" onclick="closeAdmin()">Сохранить и выйти</button>
@@ -281,7 +298,6 @@
 </div>
 
 <script>
-    // Элементы интерфейса
     const pageWelcome = document.getElementById('pageWelcome');
     const pageResult = document.getElementById('pageResult');
     const pageError = document.getElementById('pageError');
@@ -298,9 +314,8 @@
     const navToggle = document.getElementById('navToggle');
 
     let currentPrizes = [];
-    let currentMode = 'user'; // Возможные варианты: 'user', 'password', 'admin'
+    let currentMode = 'user';
 
-    // 1. Инициализация призов из памяти браузера (localStorage) или дефолтный список
     function initPrizes() {
         const savedPrizes = localStorage.getItem('lottery_prizes_list');
         if (savedPrizes !== null) {
@@ -311,7 +326,6 @@
         parsePrizes();
     }
 
-    // Разбор текста из textarea в массив
     function parsePrizes() {
         currentPrizes = prizesInput.value.split(',')
             .map(item => item.trim())
@@ -325,18 +339,16 @@
         currentPrizes.forEach((prize, index) => {
             const div = document.createElement('div');
             div.className = 'prize-item';
-            div.innerHTML = `<strong>№ ${index + 1}:</strong> ${prize}`;
+            div.innerHTML = `<strong>${index + 1} баллов:</strong> ${prize}`;
             prizePreview.appendChild(div);
         });
     }
 
-    // Сохранение изменений в процессе ввода в админке
     function saveAndRefreshPrizes() {
         localStorage.setItem('lottery_prizes_list', prizesInput.value);
         parsePrizes();
     }
 
-    // 2. Логика управления экранами
     function switchPage(activePage) {
         [pageWelcome, pageResult, pageError, pagePassword, pageAdmin].forEach(page => {
             page.classList.remove('active');
@@ -354,10 +366,8 @@
         setTimeout(() => numberInput.focus(), 100);
     }
 
-    // Обработка клика по верхней кнопке навигации
     function handleNavClick() {
         if (currentMode === 'user') {
-            // Переход на промежуточный экран ввода пароля
             currentMode = 'password';
             navToggle.textContent = "⬅️ К розыгрышу";
             passwordInput.value = '';
@@ -365,12 +375,10 @@
             switchPage(pagePassword);
             setTimeout(() => passwordInput.focus(), 100);
         } else {
-            // Если мы в админке или на экране пароля — возвращаемся обратно
             goToWelcome();
         }
     }
 
-    // Проверка пароля (1997)
     function verifyPassword() {
         if (passwordInput.value === '1997') {
             currentMode = 'admin';
@@ -387,12 +395,11 @@
         goToWelcome();
     }
 
-    // 3. Логика проверки введенного числа участником
     function claimPrize() {
         const enteredNumber = parseInt(numberInput.value, 10);
 
         if (isNaN(enteredNumber)) {
-            errorText.textContent = "Пожалуйста, введите числовой номер приза.";
+            errorText.textContent = "Пожалуйста, введите корректное количество баллов.";
             switchPage(pageError);
             return;
         }
@@ -408,12 +415,11 @@
             wonPrizeName.textContent = prize;
             switchPage(pageResult);
         } else {
-            errorText.innerHTML = `Приза под номером <strong>${enteredNumber}</strong> не существует.<br>Доступны номера только от 1 до ${currentPrizes.length}.`;
+            errorText.innerHTML = `Приза за <strong>${enteredNumber} баллов</strong> не существует.<br>Доступны награды только за баллы от 1 до ${currentPrizes.length}.`;
             switchPage(pageError);
         }
     }
 
-    // Перехват нажатия Enter в полях ввода для удобства
     numberInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') claimPrize();
     });
@@ -422,7 +428,6 @@
         if (e.key === 'Enter') verifyPassword();
     });
 
-    // Запуск при открытии страницы
     initPrizes();
 </script>
 
